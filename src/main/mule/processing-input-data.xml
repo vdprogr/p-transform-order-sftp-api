@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:s-email-notification-api="http://www.mulesoft.org/schema/mule/s-email-notification-api"
+	xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/s-email-notification-api http://www.mulesoft.org/schema/mule/s-email-notification-api/current/mule-s-email-notification-api.xsd">
+	
+	
+	<flow name="processing-input-data-flow" doc:id="c03f9ed3-3479-495f-9462-f642c16d7667" >
+	<logger level="INFO" doc:name="Logger" doc:id="66e7a5fc-f1da-4b90-a172-c8719a9bc85c" message="started processing-input-data-flow"/>
+<ee:transform doc:name="set File Location" doc:id="d36ef5a4-2414-4060-b58f-a9be6e10215c" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="sftpLocation" ><![CDATA[%dw 2.0
+output application/java
+---
+p('sftp.source.location')]]></ee:set-variable>
+				<ee:set-variable variableName="sftpOutputLocation" ><![CDATA[%dw 2.0 output application/java 
+---
+p('sftp.target.location') ]]></ee:set-variable>
+			
+</ee:variables>
+		</ee:transform>
+<flow-ref doc:name="read sftp source file list" doc:id="f4c67565-8677-4c4e-aba2-ba294d44b181" name="read-sftp-source-file-list-flow"/>
+		<choice doc:name="Choice" doc:id="affe6706-49be-42e4-8223-5175fda00511" >
+			<when expression="#[sizeOf(payload) == 1]">
+				<ee:transform doc:name="fileName" doc:id="ed32981e-3c3d-430a-b1a6-1afcf0a8429e" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="inputFileName" ><![CDATA[%dw 2.0 
+output application/java 
+--- 
+((payload[0] splitBy(","))[0] splitBy(":"))[1] ]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<ee:transform doc:name="MimeType" doc:id="a46e89b1-0159-4d4d-98ff-81a61121ddbe" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="mimeType" ><![CDATA[ %dw 2.0 output application/java 
+ --- 
+ p('inputFileName.mimeType') as String ]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<until-successful maxRetries="3" doc:name="Until Successful" doc:id="5bbed9ce-3b33-48c4-8b07-13736cf657c3" >
+					<sftp:read doc:name="Read" doc:id="4e1eadbd-8f7d-4655-a558-8d92184a13ee" config-ref="SFTP_Config" path='#[vars.sftpLocation ++ "/" ++ vars.inputFileName]' outputMimeType="#[vars.mimeType]" />
+				</until-successful>
+				<ee:transform doc:name="Filter records" doc:id="e85ce354-f335-4588-8f32-a76265288142" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[ %dw 2.0 
+ output application/json 
+ --- 
+ payload filter upper($.Status) == "OK" ]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<ee:transform doc:name="JSON to XML" doc:id="4c0705e1-0bf2-4609-9451-840892678b3a" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0 
+output application/xml 
+--- 
+orders: {(payload map 
+	oreder @(product_id:$.Product_id): {
+		count: $.Watehouse - $.Sell
+	}
+)} ]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<ee:transform doc:name="set outputFleName" doc:id="2482f4d5-f90f-4d43-b39a-773b0123a7f1" >
+						<ee:message >
+						</ee:message>
+						<ee:variables >
+						<ee:set-variable variableName="outputFileName" ><![CDATA[%dw 2.0 
+output application/java 
+--- 
+(vars.inputFileName splitBy(".")
+)[0] as String ++ ".xml" ]]></ee:set-variable>
+						
+</ee:variables>
+					</ee:transform>
+				<until-successful maxRetries="3" doc:name="Until Successful" doc:id="66d5b2ab-e278-4797-9c4e-c0706772ea0d" >
+					<sftp:write doc:name="Write" doc:id="7992dadc-1134-480b-b14b-9d3f73ea1467" config-ref="SFTP_Config_Write" path='#[vars.sftpOutputLocation ++ "/" ++ vars.outputFileName]' />
+				</until-successful>
+				<ee:transform doc:name="Transform Message" doc:id="5d5e2572-0d0a-4aff-9409-679820a68c3d" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "File " ++ vars.inputFileName ++ " has been processed !"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+</when>
+			<otherwise>
+				<ee:transform doc:name="nun files" doc:id="e47a9296-bffa-4afb-b559-913ede9118b7">
+					<ee:message>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="numFiles" ><![CDATA[%dw 2.0
+output application/json
+---
+sizeOf(payload)]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<ee:transform doc:name="Transform Message" doc:id="27670684-5dcc-4f4b-845a-5d57ac3e6669">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+  "from": "tech.vital.team.2024@gmail.com",
+  "to": "tech.vital.team.2024@gmail.com",
+  "subject": "[ " ++ p('mule.env') ++ " ] Alarm from " ++ app.name,
+  "body": "Files to process equal " ++ vars.numFiles
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<until-successful maxRetries="5" doc:name="Until Successful" doc:id="94348572-ea66-4a4c-98c5-57436f8551f3" >
+					<s-email-notification-api:create-notification doc:name="Create notification" doc:id="9197e1ba-ddaa-4468-b3ec-9ad9d48e8c17" config-ref="S_email_notification_API_Config" client-id="${mule-internal-app.client_id}" client-secret="${secure::mule-internal-app.client_secret}" />
+				</until-successful>
+				<ee:transform doc:name="Transform Message" doc:id="ea8949f5-313a-48e1-97d5-751cb2c3b106">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Abnormal case - files to process = " ++ vars.numFiles
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>		
+		
+</flow>
+</mule>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:s-email-notification-api="http://www.mulesoft.org/schema/mule/s-email-notification-api" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:s3="http://www.mulesoft.org/schema/mule/s3"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/current/mule-s3.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/s-email-notification-api http://www.mulesoft.org/schema/mule/s-email-notification-api/current/mule-s-email-notification-api.xsd">
+	<flow name="s3-file-list-flow" doc:id="07a94d0c-3f34-4196-9f78-2a1d4aa68a80" >
+		<s3:list-objects doc:name="List Objects" doc:id="b51cf0c9-8cdd-493a-9155-82f78da92c18" config-ref="Amazon_S3_Configuration" bucketName="${s3.bucketName}"/>
+		<ee:transform doc:name="to JSON" doc:id="39b0b5f6-e485-4563-9d69-908e6719fc3a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Get list of items" doc:id="cb6be8b5-95c5-4ffe-8d23-afe91f451756" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload filter (($.key contains "Orders_") and ($.key endsWith ".csv"))
+map ($.key)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="846d1805-2f61-480b-8cb7-ca37c6e972a0" >
+			<when expression="#[sizeOf(payload) &gt; 0]">
+				<ee:transform doc:name="set FileName" doc:id="219a0081-47ab-4420-9abb-b8439bc44ba0" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="s3FileName" ><![CDATA[%dw 2.0
+output application/json
+---
+payload[0]]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<s3:get-object doc:name="Get Object" doc:id="663997ed-cb1b-40fb-af53-3e022fdea18f" config-ref="Amazon_S3_Configuration" bucketName="${s3.bucketName}" key="#[vars.s3FileName]" outputMimeType="application/csv"/>
+				<ee:transform doc:name="to JSON" doc:id="79ccf08b-3674-4ab9-ad3a-57da131fee71" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<ee:transform doc:name="Transform Message" doc:id="5bc887d6-68f2-4672-a73f-5a86c61453dd">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+---
+orders: {(
+	payload map
+	odrer @(product_id: $.Product_id): {
+		count: $.Watehouse - $.Sell
+	}
+)}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<s3:create-object doc:name="Create object" doc:id="8fbe38a9-9179-417d-9d60-a54179b459fc" config-ref="Amazon_S3_Configuration" bucketName="${s3.bucketName}" key="${s3.outputFileName}"/>
+				<ee:transform doc:name="Transform Message" doc:id="3fd764ae-8f4f-47d1-9f35-7077a4813971">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "from": "tech.vital.team.2024@gmail.com",
+  "to": "tech.vital.team.2024@gmail.com",
+  "subject": "[ " ++ p('mule.env') ++ " ] " ++ app.name,
+  "body": "S3: file transformed successfully "
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<s-email-notification-api:create-notification doc:name="Create notification" doc:id="77b156fc-5b23-4c2f-8432-3808bc34b625" config-ref="S_email_notification_API_Config" client-id="${mule-internal-app.client_id}" client-secret="${secure::mule-internal-app.client_secret}"/>
+			
+
+</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="faed5f49-aa52-44f5-94af-4c5604b5eaed" message="Non found csv files"/>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Logger" doc:id="5af97ad4-4690-42c2-8fa9-b52855feb3e1" message="END"/>
+	</flow>
+</mule>

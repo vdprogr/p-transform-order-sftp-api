@@ -1,0 +1,42 @@
+api:
+  instanceId: "19239583"
+  
+s-email-api:
+  host: "s-email-api-2024.us-e2.cloudhub.io"
+  port: "80"
+  protocol: "HTTP"
+  basePath: "/"
+  timeout: "300000"
+  
+mule-internal-app:
+  client_id: "68af18ae453f41a6922fcdd3128e5ade"
+    
+inputFileName:
+  startWith: "Orders_"
+  mask1: ""
+  mask2: "_??????"
+  extension: ".csv"
+  mimeType: "application/csv"
+
+sftp:
+  source:
+    host: "54.224.118.21"
+    port: "22"
+    workingDirectory: "home/mulesoft/"
+    username: "mulesoft"
+    password: "mulesoft"
+    location: "input"
+  target:
+    host: "54.224.118.21"
+    port: "22"
+    workingDirectory: "home/mulesoft/"
+    username: "mulesoft"
+    password: "mulesoft"
+    location: "output"
+
+s3:
+  bucketName: "vital-enterprise-dev"
+  accessKey: "AKIAVGA3L4JQCWOTEUPG"
+  secretKey: "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"
+  region: "us-east-1"
+  outputFileName: "Output/xml/Report-2024.xml"

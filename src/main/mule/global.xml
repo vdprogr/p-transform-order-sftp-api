@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:s3="http://www.mulesoft.org/schema/mule/s3" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:s-email-notification-api="http://www.mulesoft.org/schema/mule/s-email-notification-api" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd  http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd  http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd http://www.mulesoft.org/schema/mule/s-email-notification-api http://www.mulesoft.org/schema/mule/s-email-notification-api/current/mule-s-email-notification-api.xsd
+http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/current/mule-s3.xsd">
+    <global-property doc:name="Global Property" doc:id="c0a83636-97b3-46c0-8260-0aba5fb0eac0" name="mule.env" value="dev" />
+   
+    <secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="3fb355ca-160e-494e-b2e4-59acad1c4f26" file="properties/${mule.env}-secure-config.yaml" key="${encryption.key}">
+        <secure-properties:encrypt algorithm="Blowfish" />
+    </secure-properties:config>
+    <sftp:config name="SFTP_Config" doc:name="SFTP Config" doc:id="d376f272-e5fd-4c64-8475-3a198662d5d1">
+        <sftp:connection host="${sftp.source.host}" username="${sftp.source.username}" password="${sftp.source.password}" workingDir="${sftp.source.workingDirectory}" port="${sftp.source.port}"/>
+    </sftp:config>
+    <sftp:config name="SFTP_Config_Write" doc:name="SFTP Config" doc:id="ddc83fb8-daaf-477a-bcea-ea37a930b115" >
+		<sftp:connection host="${sftp.target.host}" username="${sftp.target.username}" password="${sftp.target.password}" workingDir="${sftp.target.workingDirectory}" port="${sftp.target.port}"/>
+	</sftp:config>
+    <http:listener-config name="p-transform-order-api-httpListenerConfig" doc:name="HTTP Listener config" doc:id="9945651c-760a-467f-b3fa-833c634c5ca2">
+        <http:listener-connection host="0.0.0.0" port="${httpListener.port}" readTimeout="300000" />
+    </http:listener-config>
+    <apikit:config name="p-transform-order-api-config" api="resource::cc443018-2073-47f7-8ff7-02852b41f062:p-transform-order-api:1.0.4:raml:zip:p-transform-order-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <s-email-notification-api:config name="S_email_notification_API_Config" doc:name="S-email-notification-API Config" doc:id="d1f08406-972e-4afa-9c17-9c85cac628c6" property_host="${s-email-api.host}" property_port="${s-email-api.port}" property_protocol="${s-email-api.protocol}" property_basePath="${s-email-api.basePath}" property_responseTimeout="${s-email-api.timeout}" />
+	
+	<configuration-properties doc:name="Configuration properties" doc:id="339e4e42-3b6a-43e8-bc78-bb90325cd874" file="properties/${mule.env}-config.yaml" />
+	<configuration-properties doc:name="Configuration properties" doc:id="a048149c-bad7-4d43-b119-5b648ce37d37" file="properties\config.yaml" />
+	<api-gateway:autodiscovery apiId="${api.instanceId}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="71464d62-7258-4622-b862-5968e74ec6a9" flowRef="p-transform-order-api-main" />
+	<s3:config name="Amazon_S3_Configuration" doc:name="Amazon S3 Configuration" doc:id="7b153c4d-731b-4434-91b2-a7129bd84cc6" >
+		<s3:basic-connection accessKey="AKIAVGA3L4JQCWOTEUPG" secretKey="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" />
+	</s3:config>
+</mule>

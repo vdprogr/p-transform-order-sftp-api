@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<flow name="read-sftp-source-file-list-flow" doc:id="fdf4ee6a-9b08-4ace-b305-47de63fb1e9b" >
+		<try doc:name="Try" doc:id="ff9fcdeb-0c57-4925-850e-00de7c6c8240" >
+			<logger level="INFO" doc:name="Logger" doc:id="a6cd481d-847f-472c-a347-6925171ee0cd" message="started read-sftp-source-file-list-flow"/>
+			<until-successful maxRetries="3" doc:name="Until Successful" doc:id="3094c606-8106-49b7-859a-844550590932" millisBetweenRetries="50000">
+				<sftp:list doc:name="List" doc:id="2ddf40ac-f94f-4caa-8664-710df04c7be1" config-ref="SFTP_Config" directoryPath="#[vars.sftpLocation]">
+					<sftp:matcher timeUnit="MINUTES" filenamePattern="#[vars.fileNamePattern]"/>
+				</sftp:list>
+			</until-successful>
+			<set-payload value="#[output application/json --- payload map $.attributes]" doc:name="Set Payload" doc:id="1008d108-2b71-4378-a28b-23c8e567efc2" />
+			<ee:transform doc:name="files from location folder" doc:id="d2dbc2b5-6cee-449b-b343-546e5b1c88dc" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map 
+(
+	(if ($.directory) "FOLDER:" else "file:") ++
+	$.name ++
+	(if ($.directory) "" else (", size: " ++ $.size )) ++
+	", " ++
+	$.timestamp
+)]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</try>
+	</flow>
+</mule>

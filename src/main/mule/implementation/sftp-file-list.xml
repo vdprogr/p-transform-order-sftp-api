@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<flow name="sftp-file-list-flow" doc:id="ce71d916-afb4-474c-a8c2-23abb1b74f6a" >
+		        <ee:transform doc:name="set sftpLocation" doc:id="4e9a235f-b782-4140-b476-2554c08197e8" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="sftpLocation" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.sftpLocation]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="read sftp source file list" doc:id="23ecef57-5557-4000-a6c7-b5453d4b7487" name="read-sftp-source-file-list-flow"/>
+		<ee:transform doc:name="to JSON" doc:id="db7563d6-7cd1-49b5-a7c8-279c5bfa9c39" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="File list" doc:id="3498424f-9445-4e01-a5c2-b5e44e91fbf2" message="End - list of file"/>
+    
+	</flow>
+</mule>

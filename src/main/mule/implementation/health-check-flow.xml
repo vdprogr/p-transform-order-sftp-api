@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:s-email-notification-api="http://www.mulesoft.org/schema/mule/s-email-notification-api"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/s-email-notification-api http://www.mulesoft.org/schema/mule/s-email-notification-api/current/mule-s-email-notification-api.xsd">
+	<flow name="health-check-flowFlow" doc:id="8af4346b-5e56-4ffe-a8da-b28d85eea451" >
+		<logger level="INFO" doc:name="Logger" doc:id="798ef877-ae84-493e-bfd1-4d56992d7bc7" message="Start-healht-check-flow"/>
+		<until-successful maxRetries="3" doc:name="Until Successful" doc:id="4b54ba8e-96d1-4058-804a-7c13819cb49f" >
+			<s-email-notification-api:get-healths doc:name="Get healths" doc:id="f1d0443a-e9c6-4946-bad4-2c3bdc84b434" client-id="${mule-internal-app.client_id}" client-secret="${secure::mule-internal-app.client_secret}" config-ref="S_email_notification_API_Config" />
+		</until-successful>
+		<ee:transform doc:name="Transform Message" doc:id="34bfcb3f-346a-49d9-9875-152e056b42b0">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	timestamp: now(),
+	sratus: "Running",
+	details: {
+		appName: app.name,
+		muleVersion: mule.version,
+		javaVersion: server.javaVersion
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>	
+			<logger level="INFO" doc:name="Logger" doc:id="b41bdd9e-379d-42ef-8e22-d03e57aedcf7" message="End health-check-flow"/>
+</flow>
+</mule>

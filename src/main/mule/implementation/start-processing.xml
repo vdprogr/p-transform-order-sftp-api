@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="start-processing-by-scheduler-flow" doc:id="a80a2ebd-3684-442b-8985-20816de0dc74" >
+		<scheduler doc:name="Scheduler" doc:id="a03c1698-8eb5-44ee-892f-1d34a7065e13">
+			<scheduling-strategy>
+				<cron expression="${scheduler.cron.startExpression}"/>
+			</scheduling-strategy>
+		</scheduler>
+		<ee:transform doc:name="set date" doc:id="8292abb9-aca3-452e-90bf-06769b84807c" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="date" ><![CDATA[%dw 2.0
+output application/java
+---
+((now()) >> p('application.timeZone')) 
+as String {format: "yMMdd"}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="fileName pattern" doc:id="c00c48c3-ce65-4075-974e-95cfb359a22b" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="fileNamePattern" ><![CDATA[%dw 2.0
+output application/java
+---
+p('inputFileName.startWith') ++
+p('inputFileName.mask1') ++
+vars.date ++
+p('inputFileName.mask2') ++
+p('inputFileName.extension')]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="processing input data" doc:id="34abaa77-79d8-4d4f-bb8c-9790ab1e5609" name="processing-input-data-flow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="6a46903f-5d1e-46af-ad9e-a696b8d3a212" message="processed scheduled processing"/>
+	</flow>
+	<flow name="start-processing-by-data-parameter-flow" doc:id="b277be37-a19a-4758-ac2f-1d106a50f1d3" >
+		<ee:transform doc:name="Transform Message" doc:id="87f5c338-02ed-4b29-ba5e-a5090388c6db" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="dateParameter" ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/java
+---
+replaceAll(attributes.queryParams.'date', "-","")
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="fileName pattern" doc:id="854abf4f-64ef-4b32-b487-9c184bff42f0" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="fileNamePattern" ><![CDATA[%dw 2.0
+output application/java
+---
+p('inputFileName.startWith') ++
+p('inputFileName.mask1') ++
+vars.dateParameter ++
+p('inputFileName.mask2') ++
+p('inputFileName.extension')]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="392ab785-b433-4115-9a7c-2be41dd24986" name="processing-input-data-flow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="9e340600-83ca-4a5e-8791-f5301c925c37" />
+	</flow>
+	<flow name="start-processing-by-filename-flow" doc:id="bfe0f9e3-90e2-4e18-a461-bf84e2c33023" >
+		<ee:transform doc:name="Transform Message">
+            <ee:variables>
+				<ee:set-variable variableName="fileNamePattern" ><![CDATA[attributes.uriParams.'filename']]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="ebc27714-78cb-4bb9-ad2d-7cce4d705ac8" name="processing-input-data-flow"/>
+        <ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "file " ++ vars.fileNamePattern ++ " has been processed !"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="7f437c01-ef0e-45cf-9206-b84236bf89e7" />
+	</flow>
+	<flow name="get:\process:p-transform-order-api-config-flow" doc:id="5acea310-e467-4246-8c50-9af88f611942">
+        <logger level="INFO" doc:name="Logger" doc:id="55d35720-de1e-4241-9daf-125c04c1259b" message="#[mule.env]" />
+        <choice doc:name="Choice" doc:id="210601f1-205e-49d7-a85e-6861881b1d1f">
+            <when expression="#[isEmpty(attributes.queryParams.'date')]">
+                <flow-ref doc:name="Process by scheduler" doc:id="b55268a2-c015-4b16-8de8-7b995d1457e4" name="start-processing-by-scheduler-flow" />
+                <logger level="INFO" doc:name="Logger" doc:id="928c0bad-76da-4ca9-99b8-cfb85a5f4e08" message="END processing ..." />
+            </when>
+            <otherwise>
+                <flow-ref doc:name="Process by date parameter" doc:id="b6a6f71e-6e8a-46a1-b345-5123cf418f37" name="start-processing-by-data-parameter-flow" />
+                <logger level="INFO" doc:name="Logger" doc:id="b6a8fd08-e794-4ff2-88db-de100a42d364" message="#[attributes.queryParams.'date']" />
+            </otherwise>
+        </choice>
+    </flow>
+</mule>

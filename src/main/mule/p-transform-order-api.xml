@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+    <flow name="p-transform-order-api-main">
+        <http:listener path="/*" config-ref="p-transform-order-api-httpListenerConfig">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="p-transform-order-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\health:p-transform-order-api-config">
+        <logger level="INFO" doc:name="Logger" doc:id="281fb742-42f1-48ac-bc62-de5798d06b0b" message="START - get:\health:p-transform-order-api-config" />
+        		<flow-ref doc:name="Flow Reference" doc:id="dae88d23-b5ae-4b59-9a14-8b136e33c8c9" name="health-check-flowFlow" />
+    </flow>
+    <flow name="get:\process\(filename):p-transform-order-api-config">
+        <logger level="INFO" doc:name="Logger" doc:id="ea4c1e08-9864-4c3e-9dcb-c713c4d2a15f" message="START - get:\process\(filename):p-transform-order-api-config" />
+        		<flow-ref doc:name="Process by filename" doc:id="e592e367-0809-472c-a9e8-5e97fdd74acf" name="start-processing-by-filename-flow" />
+    </flow>
+    <flow name="post:\sftp\file-list:application\json:p-transform-order-api-config">
+        <logger level="INFO" doc:name="Logger" doc:id="277d043a-b895-42a3-8290-fae04643429d" message="START - post:\sftp\file-list:application\json:p-transform-order-api-config" />
+        		<flow-ref doc:name="sftp-file-list-flow" doc:id="2135da49-197c-483f-8e45-1a8b8b6e1fd2" name="sftp-file-list-flow" />
+    </flow>
+    <flow name="post:\s3\file-list:application\json:p-transform-order-api-config">
+        <logger level="INFO" doc:name="Logger" doc:id="433d7d8e-c0c2-45d0-b0e7-df9a4f224dcc" message="START - post:\s3\file-list:application\json:p-transform-order-api-config" />
+        		<flow-ref doc:name="s3-file-list-flow" doc:id="9e857660-ce84-464c-93c8-54441e799e78" name="s3-file-list-flow" />
+    </flow>
+    <flow name="get:\process:p-transform-order-api-config">
+        <logger level="INFO" doc:name="Logger" doc:id="f7fbf550-dd67-40c3-867b-8610131d54f4" message="START - get:\process:p-transform-order-api-config"/>
+		<flow-ref doc:name="Flow Reference" doc:id="b7847869-6fce-4636-aaaf-e3f2dd949df2" name="get:\process:p-transform-order-api-config-flow"/>
+    </flow>
+</mule>
