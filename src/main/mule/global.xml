@@ -3,7 +3,7 @@
 	xmlns:s3="http://www.mulesoft.org/schema/mule/s3" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:s-email-notification-api="http://www.mulesoft.org/schema/mule/s-email-notification-api" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd  http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd  http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd http://www.mulesoft.org/schema/mule/s-email-notification-api http://www.mulesoft.org/schema/mule/s-email-notification-api/current/mule-s-email-notification-api.xsd
 http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/current/mule-s3.xsd">
-    <global-property doc:name="Global Property" doc:id="c0a83636-97b3-46c0-8260-0aba5fb0eac0" name="mule.env" value="dev" />
+    <global-property doc:name="Global Property" doc:id="c0a83636-97b3-46c0-8260-0aba5fb0eac0" name="mule.env" value="local" />
    
     <secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="3fb355ca-160e-494e-b2e4-59acad1c4f26" file="properties/${mule.env}-secure-config.yaml" key="${encryption.key}">
         <secure-properties:encrypt algorithm="Blowfish" />
@@ -15,7 +15,7 @@ http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/cu
 		<sftp:connection host="${sftp.target.host}" username="${sftp.target.username}" password="${sftp.target.password}" workingDir="${sftp.target.workingDirectory}" port="${sftp.target.port}"/>
 	</sftp:config>
     <http:listener-config name="p-transform-order-api-httpListenerConfig" doc:name="HTTP Listener config" doc:id="9945651c-760a-467f-b3fa-833c634c5ca2">
-        <http:listener-connection host="0.0.0.0" port="${httpListener.port}" readTimeout="300000" />
+        <http:listener-connection host="0.0.0.0" port="${http.port}" readTimeout="300000" />
     </http:listener-config>
     <apikit:config name="p-transform-order-api-config" api="resource::cc443018-2073-47f7-8ff7-02852b41f062:p-transform-order-api:1.0.4:raml:zip:p-transform-order-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <s-email-notification-api:config name="S_email_notification_API_Config" doc:name="S-email-notification-API Config" doc:id="d1f08406-972e-4afa-9c17-9c85cac628c6" property_host="${s-email-api.host}" property_port="${s-email-api.port}" property_protocol="${s-email-api.protocol}" property_basePath="${s-email-api.basePath}" property_responseTimeout="${s-email-api.timeout}" />

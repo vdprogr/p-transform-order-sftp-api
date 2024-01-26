@@ -2,14 +2,14 @@ api:
   instanceId: "19226730"
 
 s-email-api:
-  host: "localhost"
-  port: "8083"
+  host: "prod-s-email-api.us-e2.cloudhub.io"
+  port: "80"
   protocol: "HTTP"
   basePath: "/"
   timeout: "300000"
 
 mule-internal-app:
-  client_id: "68af18ae453f41a6922fcdd3128e5ade"
+  client_id: "15c067e406ff40a685e0514842b33c37"
  
 inputFileName:
   startWith: "Orders_"

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="p-transform-order-api-test-suite.xml" />
+	<munit:test name="p-transform-order-api-test-suite-get:\process:p-transform-order-api-configTest" doc:id="72a3d086-e418-49ce-b8d6-08d58e5c4bbe" description="Test">
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to get:\process:p-transform-order-api-config" doc:id="e0917604-ee30-4e4c-93b8-81f0f5dcf8f3" name="get:\process:p-transform-order-api-config"/>
+		</munit:execution>
+	</munit:test>
+
+
+</mule>

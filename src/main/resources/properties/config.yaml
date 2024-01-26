@@ -1,10 +1,9 @@
-httpListener:
-  host: "localhost"
-  port: "8081"
+http:
+  port: "8082"
   
 scheduler:
   cron:
-    startExpression: "0 */5 * ? * *"
+    startExpression: "0 0 12 * * ?"
     
 application:
   timeZone: "Europe/Kiev"

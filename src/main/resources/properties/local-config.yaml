@@ -2,7 +2,7 @@ api:
   instanceId: "19239583"
   
 s-email-api:
-  host: "s-email-api-2024.us-e2.cloudhub.io"
+  host: "dev-s-email-api.us-e2.cloudhub.io"
   port: "80"
   protocol: "HTTP"
   basePath: "/"

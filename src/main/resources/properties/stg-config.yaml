@@ -2,8 +2,8 @@ api:
   instanceId: "19226729"
 
 s-email-api:
-  host: "localhost"
-  port: "8083"
+  host: "stg-s-email-api.us-e2.cloudhub.io"
+  port: "80"
   protocol: "HTTP"
   basePath: "/"
   timeout: "300000"
@@ -33,7 +33,6 @@ sftp:
     username: "mulesoft"
     password: "mulesoft"
     location: "output"
-
 s3:
   bucketName: "vital-enterprise-dev"
   accessKey: "AKIAVGA3L4JQCWOTEUPG"

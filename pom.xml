@@ -18,8 +18,97 @@
 
 		<app.runtime>4.4.0-20230320</app.runtime>
 		<mule.maven.plugin.version>3.8.2</mule.maven.plugin.version>
+		<munit.version>2.3.14</munit.version>
 	</properties>
+	<profiles>
+		<profile>
+			<id>dev</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.mule.tools.maven</groupId>
+						<artifactId>mule-maven-plugin</artifactId>
+						<version>${mule.maven.plugin.version}</version>
+						<extensions>true</extensions>
 
+						<configuration>
+							<cloudHubDeployment>
+								<applicationName>dev-p-transform-order-sftp-api</applicationName>
+								<environment>DEV</environment>
+								<region>us-east-2</region>
+								<workers>1</workers>
+								<workerType>MICRO</workerType>
+								<properties>
+									<mule.env>dev</mule.env>
+									<api.instanceId>${api.instanceId}</api.instanceId>
+									<anypoint.platform.client_id>bcdccc7894fc46afaf530f97032e9250</anypoint.platform.client_id>
+									<anypoint.platform.client_secret>61e748180f104F84bbB4ae5A2FF79e2b</anypoint.platform.client_secret>
+								</properties>
+							</cloudHubDeployment>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>prod</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.mule.tools.maven</groupId>
+						<artifactId>mule-maven-plugin</artifactId>
+						<version>${mule.maven.plugin.version}</version>
+						<extensions>true</extensions>
+
+						<configuration>
+							<cloudHubDeployment>
+								<applicationName>prod-p-transform-order-sftp-api</applicationName>
+								<environment>PROD</environment>
+								<region>us-east-2</region>
+								<workers>1</workers>
+								<workerType>MICRO</workerType>
+								<properties>
+									<mule.env>prod</mule.env>
+									<api.instanceId>${api.instanceId}</api.instanceId>
+									<anypoint.platform.client_id>3b183dbd2b034acc85a694b87305fcfd</anypoint.platform.client_id>
+									<anypoint.platform.client_secret>c24Fa79a030f4DdfA58fa58797be4Bf2</anypoint.platform.client_secret>
+								</properties>
+							</cloudHubDeployment>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>stg</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.mule.tools.maven</groupId>
+						<artifactId>mule-maven-plugin</artifactId>
+						<version>${mule.maven.plugin.version}</version>
+						<extensions>true</extensions>
+
+						<configuration>
+							<cloudHubDeployment>
+								<applicationName>stg-p-transform-order-sftp-api</applicationName>
+								<environment>STG</environment>
+								<region>us-east-2</region>
+								<workers>1</workers>
+								<workerType>MICRO</workerType>
+								<properties>
+									<mule.env>stg</mule.env>
+									<api.instanceId>${api.instanceId}</api.instanceId>
+									<anypoint.platform.client_id>c48fc7674ebb482ca235559d3fd1289e</anypoint.platform.client_id>
+									<anypoint.platform.client_secret>90A607bB9038458baCFfC8A737c07901</anypoint.platform.client_secret>
+								</properties>
+							</cloudHubDeployment>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 	<build>
 		<plugins>
 			<plugin>
@@ -39,24 +128,31 @@
 						<muleVersion>${app.runtime}</muleVersion>
 						<username>${anypoint.username}</username>
 						<password>${anypoint.password}</password>
-						<applicationName>p-transform-order-sftp-api</applicationName>
-						<environment>DEV</environment>
-						<region>us-east-2</region>
-						<workers>1</workers>
-						<workerType>MICRO</workerType>
 						<deploymentTimeout>1000000</deploymentTimeout>
 						<properties>
+							<http.port>8081</http.port>
 							<encryption.key>${encryption.key}</encryption.key>
-							<mule.env>dev</mule.env>
-							<api.instanceId>${api.instanceId}</api.instanceId>
-							<anypoint.platform.client_id>bcdccc7894fc46afaf530f97032e9250</anypoint.platform.client_id>
-							<anypoint.platform.client_secret>61e748180f104F84bbB4ae5A2FF79e2b</anypoint.platform.client_secret>
 							<anypoint.platform.base_uri>https://anypoint.mulesoft.com</anypoint.platform.base_uri>
 							<anypoint.platform.analytic.base_uri>https://analytics-ingest.anypoint.mulesoft.com</anypoint.platform.analytic.base_uri>
 						</properties>
 					</cloudHubDeployment>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>com.mulesoft.munit.tools</groupId>
+				<artifactId>munit-maven-plugin</artifactId>
+				<version>2.3.14</version>
+				<executions>
+					<execution>
+						<id>test</id>
+						<phase>test</phase>
+						<goals>
+							<goal>test</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 	</build>
 
@@ -109,6 +205,26 @@
 			<artifactId>mule-amazon-s3-connector</artifactId>
 			<version>5.7.0</version>
 			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.munit</groupId>
+			<artifactId>munit-runner</artifactId>
+			<version>2.3.14</version>
+			<classifier>mule-plugin</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.munit</groupId>
+			<artifactId>munit-tools</artifactId>
+			<version>2.3.14</version>
+			<classifier>mule-plugin</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.weave</groupId>
+			<artifactId>assertions</artifactId>
+			<version>1.0.2</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
